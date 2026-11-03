@@ -31,6 +31,7 @@ cd Builds/iOS
 xtool xcodebuild --ipa                    # unsigned IPA
 xtool xcodebuild --sign --ipa -o Game.ipa # signed with your Apple ID (after `xtool auth`)
 xtool install Game.ipa                    # install on a connected iPhone
+xtool install --launch Game.ipa           # install, then start the app
 ```
 
 What you need:
@@ -46,6 +47,25 @@ What you need:
 Release builds also write dSYMs for crash symbolication, next to the build products (for example `build/Build/Products/Release-iphoneos/UnityFramework.framework.dSYM`), and the IPA is compressed and stripped like an Xcode archive.
 
 A free Apple ID works for signing, but its profiles expire after 7 days, and a device can hold at most 3 apps signed with free accounts. See [Build Xcode Projects](Documentation/xtool.docc/Xcode-Projects.md) for options, signing and limitations, and [Building from source](Documentation/xtool.docc/Building-from-Source.md) for setup.
+
+## Launching apps
+
+Start an installed app from the command line with `xtool launch`, or pass `--launch` to `xtool install` to start it right after installing:
+
+```bash
+xtool install --launch Game.ipa           # install, then launch
+xtool launch XTL-ABCDE12345.com.example.game   # launch an installed app by bundle ID
+```
+
+`xtool install` re-signs the app with your team, so the bundle ID on the device gets an `XTL-<team>.` prefix. `--launch` picks that up automatically. With `xtool launch`, pass the prefixed ID.
+
+On iOS 17 and later, xtool launches through the CoreDevice app service (the same service Xcode uses), over a userspace tunnel that doesn't need root. This needs:
+
+- iOS 17.4 or later, connected over USB
+- Developer Mode turned on (**Settings > Privacy & Security > Developer Mode**)
+- The personalized developer disk image mounted (check with `ideviceimagemounter list`). xtool doesn't mount it yet.
+
+On older iOS versions, xtool launches through debugserver, which needs Developer Mode and the matching developer disk image.
 
 ## Examples
 
@@ -119,12 +139,12 @@ OPTIONS:
   -h, --help              Show help information.
 ```
 
-For example, to build a Unity export into an unsigned IPA, or a signed one you can install:
+For example, to build a Unity export into an unsigned IPA, or a signed one you can install and launch:
 
 ```bash
 cd Builds/iOS
 xtool xcodebuild --ipa
-xtool xcodebuild --ipa --sign -o Game.ipa && xtool install Game.ipa
+xtool xcodebuild --ipa --sign -o Game.ipa && xtool install --launch Game.ipa
 ```
 
 ### Library

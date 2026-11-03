@@ -16,6 +16,11 @@ struct InstallCommand: AsyncParsableCommand {
         help: "The path to a custom app/ipa to install"
     ) var path: String
 
+    @Flag(
+        name: .shortAndLong,
+        help: "Launch the app after installing it"
+    ) var launch = false
+
     func run() async throws {
         let token = try AuthToken.saved()
 
@@ -29,8 +34,10 @@ struct InstallCommand: AsyncParsableCommand {
             delegate: installDelegate
         )
 
+        // the installer re-signs the app, so this is the bundle ID it ended up with
+        let bundleID: String
         do {
-            try await installer.install(
+            bundleID = try await installer.install(
                 app: URL(fileURLWithPath: path),
                 udid: client.udid,
                 lookupMode: .only(client.connectionType),
@@ -42,6 +49,10 @@ struct InstallCommand: AsyncParsableCommand {
         } catch {
             d.out.print("\nError: \(error)")
             throw ExitCode.failure
+        }
+
+        if launch {
+            try LaunchCommand.launch(bundleID: bundleID, arguments: [], device: client.device)
         }
     }
 }

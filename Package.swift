@@ -132,6 +132,7 @@ let package = Package(
                 .product(name: "ConcurrencyExtras", package: "swift-concurrency-extras"),
                 .product(name: "Dependencies", package: "swift-dependencies"),
                 .product(name: "SwiftyMobileDevice", package: "SwiftyMobileDevice"),
+                .product(name: "libimobiledevice", package: "xtool-core"),
                 .product(name: "RCodesign", package: "swift-rcodesign"),
                 .product(name: "ProtoCodable", package: "xtool-core"),
                 .product(name: "Superutils", package: "xtool-core"),
