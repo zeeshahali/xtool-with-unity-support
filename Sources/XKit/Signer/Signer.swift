@@ -39,12 +39,12 @@ private struct UnimplementedSigner: Signer {
         deep: Bool,
         progress: @escaping @Sendable (Double?) -> Void
     ) async throws {
-        let operation: () throws -> Void = unimplemented()
-        try operation()
+        unimplemented("Signer.sign")
     }
 
+    // Not `let operation: () throws -> Data? = unimplemented()`: calling that closure
+    // here crashes LLVM's FunctionAttrs pass in optimized builds (Swift 6.4.1, Linux).
     func analyze(executable: URL) async throws -> Data? {
-        let operation: () throws -> Data? = unimplemented()
-        return try operation()
+        unimplemented("Signer.analyze", placeholder: nil)
     }
 }

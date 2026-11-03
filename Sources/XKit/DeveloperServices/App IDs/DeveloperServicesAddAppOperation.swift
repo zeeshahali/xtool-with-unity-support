@@ -170,10 +170,13 @@ public struct DeveloperServicesAddAppOperation: DeveloperServicesOperation {
         let infoURL = app.appendingPathComponent("Info.plist")
         guard let data = try? Data(contentsOf: infoURL),
             let dict = try? PropertyListSerialization.propertyList(from: data, format: nil) as? [String: Any],
-            let bundleID = dict["CFBundleIdentifier"] as? String,
+            let rawBundleID = dict["CFBundleIdentifier"] as? String,
             let executable = dict["CFBundleExecutable"] as? String else {
             throw Error.invalidApp(app)
         }
+        // an app that xtool already signed (e.g. `xcodebuild --sign` followed by
+        // `xtool install`) carries the XTL- prefix; strip it so we don't add another.
+        let bundleID = ProvisioningIdentifiers.sanitize(identifier: rawBundleID)
         let executableURL = app.appendingPathComponent(executable)
 
         var entitlements: Entitlements

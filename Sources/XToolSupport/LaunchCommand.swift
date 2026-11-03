@@ -37,7 +37,12 @@ struct LaunchCommand: AsyncParsableCommand {
 
         d.out.print("Launching \(executable.lastPathComponent)...")
 
-        let debugserver = try DebugserverClient(device: client.device, label: "xtool")
+        let debugserver: DebugserverClient
+        do {
+            debugserver = try DebugserverClient(device: client.device, label: "xtool")
+        } catch {
+            throw debugserverUnavailableError(device: client.device, underlying: error)
+        }
         guard try debugserver.launch(executable: executable, arguments: args) == "OK" else {
             throw Console.Error("Launch failed (!OK)")
         }
@@ -45,5 +50,25 @@ struct LaunchCommand: AsyncParsableCommand {
             throw Console.Error("Launch failed (!qLaunchSuccess)")
         }
         try debugserver.send(command: "D", arguments: [])
+    }
+
+    // iOS 17 moved debugserver behind the CoreDevice tunnel, so it's no longer
+    // reachable as a lockdown service, even with a developer disk image mounted.
+    private func debugserverUnavailableError(device: Device, underlying: Swift.Error) -> Swift.Error {
+        let version = try? LockdownClient(device: device, label: "xtool", performHandshake: true)
+            .value(ofType: String.self, forDomain: nil, key: "ProductVersion")
+        guard let version, let major = version.split(separator: ".").first.flatMap({ Int($0) }) else {
+            return underlying
+        }
+        if major >= 17 {
+            return Console.Error("""
+            Could not launch the app: xtool can't start apps on iOS 17 or later (this device runs \
+            iOS \(version)). Open the app from the Home Screen instead.
+            """)
+        }
+        return Console.Error("""
+        Could not start debugserver on iOS \(version). Make sure Developer Mode is on and the \
+        matching developer disk image is mounted.
+        """)
     }
 }
